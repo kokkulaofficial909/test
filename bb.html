@@ -1,0 +1,431 @@
+<!doctype html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>BBox</title>
+    <link rel="shortcut icon" href="{% static 'xae_app/img/intel.ico' %}"/>
+    <link href="{% static 'fontawesomefree/css/fontawesome.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'fontawesomefree/css/brands.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'fontawesomefree/css/solid.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'xae_app/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'xae_app/css/style.css' %}" rel="stylesheet"/>
+    <link href="{% static 'xae_app/css/quill.snow.css' %}" rel="stylesheet">
+    <link href="{% static 'xae_app/bootstrap-icons-1.11.1/bootstrap-icons.css' %}" rel="stylesheet">
+    <link href="{% static 'xae_app/table/bootstrap-table.min.css' %}" rel="stylesheet">
+    <link href="{% static 'xae_app/table/bootstrap-table.css' %}" rel="stylesheet">
+    <link href="{% static 'xae_app/css/tail.select-default.min.css' %}" rel="stylesheet">
+    <link href="{% static 'xae_app/css/bootstrap-toggle.min.css' %}" rel="stylesheet">
+
+    <style>
+        div .aa { border-bottom : 1px solid #000; margin : 2px 0;}
+                tr[data-non-edit="true"] {
+
+                }
+                tr[data-non-edit="false"] {
+                    display : none;
+                }
+                tr[data-edit="true"] {
+
+                }
+                tr[data-edit="false"] {
+                    display : none;
+                }
+
+                tr[data-add="false"] {
+                    display : none;
+                }
+    </style>
+</head>
+<body style="background-color:#ffffff!important;">
+
+<!-- Example Code -->
+<nav class="navbar navbar-expand-lg">
+    <div class="container-fluid">
+        <a class="navbar-brand">
+            <span>Intel</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-md-auto gap-2">
+                <form method="POST" action="{% url 'project_change' func_name='bbox' %}" id="projectForm">
+                    {% csrf_token %}
+                    <select name="projectdata" id='projectdata' onchange="updateProjectCookie(this.value); this.form.submit();">
+                        <option value="" disabled >Projects</option>
+                        {% for i in project %}
+                        <option value="{{i}}">{{i}}</option>
+                        {% endfor %}
+                    </select>
+                    <p style="display:none;">{{error}}</p>
+                </form>
+                <li class="nav-item rounded">
+                    <a class="nav-link ho" href="{% url 'home' %}">
+                        <i class="fa fa-home"></i>
+                        <span>Home</span>
+                    </a>
+                </li>
+                <li class="nav-item dropdown rounded">
+                    <a class="nav-link ho dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa fa-user"></i>
+                        <span>{{user}}</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                        <li><a class="dropdown-item" href="{% url 'logout' %}">Logout</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<br>
+<main>
+    <!-- Service 4 - Bootstrap Brain Component -->
+    <section>
+        <div class="container" style="max-width:100%;">
+            <div class="card">
+                <div class="card-header">
+                    <b>BBox</b>
+                    <!-- Button trigger modal -->
+                    {% if count < 1 %}
+                    <button type="button" class="btn btn-primary btn-sm add-btn"
+                            style="float:right;">
+                        Add BBox
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <form>
+                        <table class="table table-bordered table-striped" id="example"
+                               data-toggle="table"
+                               data-search="true"
+                               data-search-align="left"
+                               data-show-columns="true"
+                               data-show-toggle="false"
+                               data-show-columns-toggle-all="true"
+                               data-show-export="true"
+                               data-export-data-type="all"
+                               data-response-handler="responseHandler"
+                               data-show-fullscreen="true"
+                               data-buttons-class="primary btn-sm">
+                            <thead>
+                            <tr>
+                                <th scope="col" nowrap data-field="category" class="w-50 p-3 category">Category</th>
+                                <th scope="col" nowrap data-field="process" class="w-50 p-3 process">Process</th>
+                                <th scope="col" nowrap data-field="die_area" class="w-50 p-3 die_area">Die Area</th>
+                                <th scope="col" nowrap data-field="config" class="w-50 p-3 config">Config</th>
+                                <th scope="col" nowrap data-field="pv_freq" class="w-50 p-3 pv_freq">PV Freq</th>
+                                <th scope="col" nowrap data-field="perf_target" class="w-50 p-3 perf_target">Perf Target</th>
+                                <th scope="col" nowrap data-field="cdyn" class="w-50 p-3 cdyn">Cdyn</th>
+                                <th scope="col" nowrap data-field="schedule_bbox" class="w-50 p-3 schedule_bbox">Schedule</th>
+                                <th scope="col" nowrap data-field="action" class="w-50 p-3 action"style="display: none;">Action</th>
+                            </tr>
+                            </thead>
+                            <tbody data-body="bbox">
+                            {% for i in data %}
+                            <tr data-n-id="{{ i.bbox_id }}" data-non-edit="true">
+                                <td nowrap class="category">{{ i.category }}</td>
+                                <td nowrap class="process">{{ i.process }}</td>
+                                <td nowrap class="die_area">{{ i.die_area }}</td>
+                                <td nowrap class="config">{{ i.config }}</td>
+                                <td nowrap class="pv_freq">{{ i.pv_freq }}</td>
+                                <td nowrap class="perf_target">{{ i.perf_target }}</td>
+                                <td nowrap class="cdyn">{{ i.cdyn }}</td>
+                                <td nowrap class="schedule_bbox">{{ i.schedule_bbox }}</td>
+                                <td class="text-center">
+                                    <div class="btn-group" role="group" aria-label="Button group">
+                                        <button data-id="{{ i.bbox_id }}" type="button" class="btn btn-info btn-sm edit-btn" title="Edit Metric">
+                                            <i class="fas fa-edit"></i>
+                                        </button>&nbsp;&nbsp
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr data-e-id="{{ i.bbox_id }}" data-edit="false">
+                                <td class="category">
+                                    <input type="text" class="form-control" data-prop="category" name="category" value="{{ i.category }}" disabled />
+                                </td>
+                                <td class="process">
+                                    <input type="text" class="form-control" data-prop="process" name="process" placeholder="Enter Process" value="{{ i.process }}" required="required" />
+                                </td>
+                                <td class="die_area">
+                                    <input type="text" class="form-control" data-prop="die_area" name="die_area" placeholder="Enter Die Area" value="{{ i.die_area }}" required="required" />
+                                </td>
+                                <td class="config">
+                                    <input type="text" class="form-control" data-prop="config" name="config" placeholder="Enter Config" value="{{ i.config }}" required="required" />
+                                </td>
+                                <td class="pv_freq">
+                                    <input type="text" class="form-control" data-prop="pv_freq" name="pv_freq" placeholder="Enter PV Freq" value="{{ i.pv_freq }}" required="required" />
+                                </td>
+                                <td class="perf_target">
+                                    <input type="text" class="form-control" data-prop="perf_target" name="perf_target" placeholder="Enter Perf Target" value="{{i.perf_target}}" required="required" />
+                                </td>
+                                <td class="cdyn">
+                                    <input type="text" class="form-control" data-prop="cdyn" name="cdyn" placeholder="Enter Cdyn" value="{{ i.cdyn }}" required="required" />
+                                </td>
+                                <td class="schedule_bbox">
+                                    <input type="text" class="form-control" data-prop="schedule_bbox" name="schedule_bbox" placeholder="Enter Schedule" value="{{ i.schedule_bbox }}" required="required" />
+                                </td>
+                                <div class="text-center">
+                                    <td>
+                                        <button data-id="{{ i.bbox_id }}" type="submit" class="btn btn-success btn-sm save-btn" title="Save Metric">
+                                            <i class="fa-solid fa-check"></i>
+                                        </button>
+                                        <button data-id="{{ i.bbox_id }}" type="reset" class="btn btn-danger btn-sm cancel-btn" title="Cancel Metric">
+                                            <i class="fa-solid fa-xmark"></i>
+                                        </button>
+                                    </td>
+                                </div>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+<!-- Include the Quill library -->
+<script src="{% static 'xae_app/js/jquery.min.js' %}"></script>
+<script src="{% static 'xae_app/js/quill.js' %}"></script>
+<script src="{% static 'xae_app/table/popper.min.js' %}"></script>
+<script src="{% static 'xae_app/js/bootstrap.min.js' %}"></script>
+<script src="{% static 'xae_app/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'xae_app/table/bootstrap-table.min.js' %}"></script>
+<script src="{% static 'xae_app/table/bootstrap-table.js' %}"></script>
+<script src="{% static 'xae_app/table/tableExport.min.js' %}"></script>
+<script src="{% static 'xae_app/table/bootstrap-table-export.min.js' %}"></script>
+<script src="{% static 'xae_app/js/tail.select-full.min.js' %}"></script>
+<script src="{% static 'xae_app/js/bootstrap-toggle.min.js' %}"></script>
+
+<script>
+    function nameFormatter(value, row) {
+      var icon = row.status === 'R'  ? 'fa-circle fa-sm text-danger' :
+      row.status === 'G'  ? 'fa-circle fa-sm text-success' :
+      row.status === 'Y'  ? 'fa-circle fa-sm text-warning' :
+      row.status === 'B'  ? 'fa-circle fa-sm text-primary' : 'none'
+      return '<i class="fa ' + icon + '"></i> ' + value
+    }
+</script>
+<script>
+    $(document).ready(function() {
+        $('#example').bootstrapTable({
+            exportOptions: {
+                fileName: 'BBox'
+            },
+            exportTypes: ['excel'],
+        });
+
+        // Other initialization code or event handlers can go here
+    });
+
+
+    $(document).ready(function() {
+        $('.edit-btn').on('click', function() {
+            let objectId = $(this).data('id');
+            const non_Edit = $('tr[data-n-id="' + objectId + '"]').attr('data-non-edit');
+            const edit = $('tr[data-e-id="' + objectId + '"]').attr('data-edit');
+            $('tr[data-n-id="' + objectId + '"]').attr('data-non-edit', (non_Edit === 'true' ? false : true));
+            $('tr[data-e-id="' + objectId + '"]').attr('data-edit', (edit === 'true' ? false : true));
+        });
+
+        $('.cancel-btn').on('click', function() {
+            let objectId = $(this).data('id');
+            const non_Edit = $('tr[data-n-id="' + objectId + '"]').attr('data-non-edit');
+            const edit = $('tr[data-e-id="' + objectId + '"]').attr('data-edit');
+            $('tr[data-n-id="' + objectId + '"]').attr('data-non-edit', (non_Edit === 'true' ? false : true));
+            $('tr[data-e-id="' + objectId + '"]').attr('data-edit', (edit === 'true' ? false : true));
+        });
+
+        $('.save-btn').on('click', function() {
+            event.preventDefault(); // Prevent the default form submission behavior
+            let objectId = $(this).data('id');
+            const projectData = $('#projectdata').val();
+            document.cookie = `projectData=${projectData}; path=/; SameSite=Lax; expires=Fri, 31 Dec 9999 23:59:59 GMT;`;
+            const bbox = {
+                category: $('tr[data-e-id="' + objectId + '"] input[data-prop="category"]')[0].value,
+                process: $('tr[data-e-id="' + objectId + '"] input[data-prop="process"]')[0].value,
+                die_area: $('tr[data-e-id="' + objectId + '"] input[data-prop="die_area"]')[0].value,
+                config: $('tr[data-e-id="' + objectId + '"] input[data-prop="config"]')[0].value,
+                pv_freq: $('tr[data-e-id="' + objectId + '"] input[data-prop="pv_freq"]')[0].value,
+                perf_target: $('tr[data-e-id="' + objectId + '"] input[data-prop="perf_target"]')[0].value,
+                cdyn: $('tr[data-e-id="' + objectId + '"] input[data-prop="cdyn"]')[0].value,
+                schedule_bbox: $('tr[data-e-id="' + objectId + '"] input[data-prop="schedule_bbox"]')[0].value,
+                project_name: projectData
+            }
+            $.ajax({
+                type: "POST",
+                url: "/bbox_edit/" + objectId,
+                data: bbox,
+                success: function(data) {
+                document.cookie = `projectData=${projectData}; path=/; SameSite=Lax; expires=Fri, 31 Dec 9999 23:59:59 GMT;`;
+                    window.location.reload()
+                }
+            })
+        });
+
+        $(document).on('click', '.save-all-btn', function() {
+            let rowsData = [];
+            const projectData = $('#projectdata').val();
+            document.cookie = `projectData=${projectData}; path=/; SameSite=Lax; expires=Fri, 31 Dec 9999 23:59:59 GMT;`;
+            $('tr[data-a-id^="new-"]').each(function() {
+                let rowData = {
+                    category: $(this).find('input[data-prop="category"]').val(),
+                    process: $(this).find('input[data-prop="process"]').val(),
+                    die_area: $(this).find('input[data-prop="die_area"]').val(),
+                    config: $(this).find('input[data-prop="config"]').val(),
+                    pv_freq: $(this).find('input[data-prop="pv_freq"]').val(),
+                    perf_target: $(this).find('input[data-prop="perf_target"]').val(),
+                    cdyn: $(this).find('input[data-prop="cdyn"]').val(),
+                    schedule_bbox: $(this).find('input[data-prop="schedule_bbox"]').val(),
+                    project_name: projectData
+                };
+                rowsData.push(rowData);
+            });
+
+            $.ajax({
+                type: 'POST',
+                url: '/bbox/',
+                data: JSON.stringify({ 'data': rowsData }),
+                success: function(data) {
+                    document.cookie = `projectData=${projectData}; path=/; SameSite=Lax; expires=Fri, 31 Dec 9999 23:59:59 GMT;`;
+                    window.location.reload();
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error saving data:', error);
+                }
+            });
+        });
+        $(document).on('click', '.add-cancel-btn', function() {
+            let newRows = $('tr[data-a-id^="new-"]');
+            newRows.each(function() {
+                $(this).remove();
+            });
+
+            // Remove the save all and cancel buttons
+            $('#example tbody tr:first-child').remove();
+        });
+
+    });
+</script>
+<script>
+$('.add-btn').on('click', function() {
+    let rowsToAdd = '';
+    let values = ['Plan', 'Actual', 'Grading', 'Comments'];
+    let process_placeholders = ['Enter Process', 'Enter Process', 'Enter RGBY Value', 'Enter Comments'];
+    let die_area_placeholders = ['Enter Die Area', 'Enter Die Area', 'Enter RGBY Value', 'Enter Comments'];
+    let config_placeholders = ['Enter Config', 'Enter Config', 'Enter RGBY Value', 'Enter Comments'];
+    let pv_freq_placeholders = ['Enter PV Freq', 'Enter PV Freq', 'Enter RGBY Value', 'Enter Comments'];
+    let perf_target_placeholders = ['Enter Perf Target', 'Enter Perf Target', 'Enter RGBY Value', 'Enter Comments'];
+    let cdyn_placeholders = ['Enter CDYN', 'Enter CDYN', 'Enter RGBY Value', 'Enter Comments'];
+    let schedule_bbox_placeholders = ['Enter Schedule Bbox', 'Enter Schedule Bbox', 'Enter RGBY Value', 'Enter Comments'];
+
+    let rowCount = $('#example tbody tr[data-a-id="new"]').length + 1; // Get the current count of new rows
+    for (let i = 0; i < 4; i++) {
+        rowsToAdd += `
+        <tr data-a-id="new-${rowCount}" data-add="false">
+            <td class="category">
+                <input type="text" class="form-control" data-prop="category" name="category" value="${values[i]}" disabled="disabled" />
+            </td>
+            <td class="process">
+                <input type="text" class="form-control" data-prop="process" name="process" placeholder="${process_placeholders[i]}" required="required" />
+            </td>
+            <td class="die_area">
+                <input type="text" class="form-control" data-prop="die_area" name="die_area" placeholder="${die_area_placeholders[i]}" required="required" />
+            </td>
+            <td class="config">
+                <input type="text" class="form-control" data-prop="config" name="config" placeholder="${config_placeholders[i]}" required="required" />
+            </td>
+            <td class="pv_freq">
+                <input type="text" class="form-control" data-prop="pv_freq" name="pv_freq" placeholder="${pv_freq_placeholders[i]}" required="required" />
+            </td>
+            <td class="perf_target">
+                <input type="text" class="form-control" data-prop="perf_target" name="perf_target" placeholder="${perf_target_placeholders[i]}" required="required" />
+            </td>
+            <td class="cdyn">
+                <input type="text" class="form-control" data-prop="cdyn" name="cdyn" placeholder="${cdyn_placeholders[i]}" required="required" />
+            </td>
+            <td class="schedule_bbox">
+                <input type="text" class="form-control" data-prop="schedule_bbox" name="schedule_bbox" placeholder="${schedule_bbox_placeholders[i]}" required="required" />
+            </td>
+        </tr>`;
+        rowCount++;
+    }
+    rowsToAdd += `
+    <tr>
+        <td colspan="10" class="text-center">
+            <button type="button" class="btn btn-success btn-sm save-all-btn" title="Save Metric">
+                <i class="fa-solid fa-check"></i> Save All
+            </button>
+            <button data-id="new-cancel" type="button" class="btn btn-danger btn-sm add-cancel-btn" title="Cancel">
+                <i class="fa-solid fa-xmark"></i> Cancel
+            </button>
+
+        </td>
+    </tr>
+    `;
+    $('#example tbody').prepend(rowsToAdd);
+
+    // Initialize toggle switches for the new rows
+    $('.switch-toggle').bootstrapToggle();
+
+    // Show the newly added rows
+    $('#example tbody tr[data-a-id^="new-"]').show();
+
+});
+</script>
+
+<script>
+    // Show action column header when editing or displaying
+function showActionColumnHeader() {
+    $('th[data-field="action"]').css('display', '');
+}
+
+// Hide action column header when adding a row
+function hideActionColumnHeader() {
+    $('th[data-field="action"]').css('display', 'none');
+}
+
+// Add button click event to hide action column header and add row
+$('.add-btn').on('click', function() {
+    hideActionColumnHeader();
+    // Add row logic here
+});
+
+// Edit button click event to show action column header and edit row
+$(document).on('click', '.edit-btn', function() {
+    showActionColumnHeader();
+    // Edit row logic here
+});
+
+// Display button click event to show action column header and display row
+$(document).on('click', '.display-btn', function() {
+    showActionColumnHeader();
+    // Display row logic here
+});
+
+</script>
+<script>
+    // Delete projectData cookie after loading
+    function updateProjectCookie(project) {
+        // Set the cookie with the project data
+        document.cookie = `projectData=${project}; path=/; SameSite=Lax; expires=Fri, 31 Dec 9999 23:59:59 GMT;`;
+    }
+</script>
+<script>
+    tail.select("#projectdata", {
+    animate: true,
+    deselect: false,
+    disabled: false,
+    height: 350,
+    multiple: false,
+    placeholder: "Projects",
+    search: false,
+    width: 170
+});
+</script>
+</body>
+</html>
